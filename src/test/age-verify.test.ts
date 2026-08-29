@@ -21,7 +21,7 @@ import {
 } from '../wallet.js';
 import { buildProviders, type HelloWorldProviders } from '../providers.js';
 import {
-  CompiledHelloWorldContract,
+  CompiledAgeVerifyContract,   
   Contract,
   ledger,
   zkConfigPath,
@@ -148,7 +148,7 @@ describe(`Age Verify Contract (${network})`, () => {
     const deployed: DeployedContract<Contract> = await deployContract<Contract>(
       providers,
       {
-        compiledContract: CompiledHelloWorldContract,
+        compiledContract: CompiledAgeVerifyContract,
         privateStateId: PRIVATE_STATE_ID,
         initialPrivateState: {},
       },
@@ -167,7 +167,7 @@ describe(`Age Verify Contract (${network})`, () => {
     );
 
     await submitCallTx<Contract, 'verifyAge'>(providers, {
-      compiledContract: CompiledHelloWorldContract,
+      compiledContract: CompiledAgeVerifyContract,
       contractAddress,
       privateStateId: PRIVATE_STATE_ID,
       circuitId: 'verifyAge',
@@ -184,7 +184,7 @@ describe(`Age Verify Contract (${network})`, () => {
 
     await expect(
       submitCallTx<Contract, 'verifyAge'>(providers, {
-        compiledContract: CompiledHelloWorldContract,
+        compiledContract: CompiledAgeVerifyContract,
         contractAddress,
         privateStateId: PRIVATE_STATE_ID,
         circuitId: 'verifyAge',
