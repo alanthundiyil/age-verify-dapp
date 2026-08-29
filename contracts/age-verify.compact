@@ -1,14 +1,73 @@
 pragma language_version 0.23;
 import CompactStandardLibrary;
+import "schnorr" prefix Schnorr_;
+
+export { Schnorr_SchnorrSignature };
 
 export ledger verifiedUsers: Map<Bytes<32>, Boolean>;
+export ledger contractAdmin: Bytes<32>;
+export ledger providers: Map<Uint<16>, JubjubPoint>;
 
-witness localBirthTimestamp(): Uint<64>;
+// Supplied locally by the trusted attestation service's operator, never sent
+// to the network. Binds the contract's admin role to whoever holds this
+// secret at deploy time (see deriveAdminPublicKey below).
+witness getAdminSecret(): Bytes<32>;
+
+// Supplied locally by the user's own app/device: the birthdate a trusted
+// attestation provider signed, the Schnorr signature itself, and which
+// registered provider produced it. Replaces the old bare `localBirthTimestamp`
+// witness, which trusted the app's claimed birthdate with no verification.
+witness getAttestedBirthWitness(): [Uint<64>, Schnorr_SchnorrSignature, Uint<16>];
+
+constructor() {
+  contractAdmin = disclose(deriveAdminPublicKey(getAdminSecret()));
+}
+
+// `ownPublicKey()` is deliberately not used here: it returns a value the
+// prover claims, with no cryptographic binding to whoever actually holds the
+// secret. Deriving the admin identity from a witness secret (as
+// example-zkloan does) means only whoever knows that secret can pass the
+// `contractAdmin` equality check below.
+export pure circuit deriveAdminPublicKey(secret: Bytes<32>): Bytes<32> {
+  return persistentHash<[Bytes<22>, Bytes<32>]>(["age-verify:admin:pk:v1", secret]) as Bytes<32>;
+}
 
 export circuit verifyAge(userId: Bytes<32>): [] {
-  const birthTimestamp = localBirthTimestamp();
+  const [birthTimestamp, signature, providerId] = getAttestedBirthWitness();
+
+  assert(providers.member(disclose(providerId)), "Attestation provider not registered");
+  const providerPk = providers.lookup(disclose(providerId));
+
+  // Bind the signature to this specific userId so an attestation issued for
+  // one identity can't be replayed to verify a different one.
+  const userIdHash: Field = transientHash<Bytes<32>>(userId);
+  const msg: Vector<2, Field> = [disclose(birthTimestamp) as Field, userIdHash];
+  Schnorr_schnorrVerify<2>(msg, signature, providerPk);
+
   const minAgeSeconds = 18 * 365 * 24 * 60 * 60;
   const cutoff = (birthTimestamp + minAgeSeconds) as Uint<64>;
   assert(blockTimeGte(disclose(cutoff)), "User does not meet minimum age requirement");
   verifiedUsers.insert(disclose(userId), true);
+}
+
+export circuit registerProvider(providerId: Uint<16>, providerPk: JubjubPoint): [] {
+  assert(contractAdmin == deriveAdminPublicKey(getAdminSecret()), "Only admin can register providers");
+  providers.insert(disclose(providerId), disclose(providerPk));
+}
+
+export circuit removeProvider(providerId: Uint<16>): [] {
+  assert(contractAdmin == deriveAdminPublicKey(getAdminSecret()), "Only admin can remove providers");
+  assert(providers.member(disclose(providerId)), "Provider not found");
+  providers.remove(disclose(providerId));
+}
+
+// Re-exported so `pureCircuits.schnorrChallenge` is available in the
+// generated TypeScript for off-chain signing (the attestation service needs
+// to compute the same challenge hash the circuit will verify).
+export pure circuit schnorrChallenge(
+    ann_x: Field, ann_y: Field,
+    pk_x: Field, pk_y: Field,
+    msg: Vector<2, Field>
+): Field {
+  return Schnorr_schnorrChallenge<2>(ann_x, ann_y, pk_x, pk_y, msg);
 }

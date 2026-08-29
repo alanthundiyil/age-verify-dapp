@@ -20,10 +20,14 @@ It never shows or stores:
 ### The user flow
 
 1. User opens the app and taps "Verify age"
-2. The app asks the user's device for their birthdate (currently: just
-   entered locally — see [Known limitation](#known-limitation-self-attested-birthdate) below)
+2. The app gets a Schnorr-signed birthdate attestation from a trusted
+   provider (see [Provider registry and admin
+   role](#provider-registry-and-admin-role) below; who that provider is in
+   practice is still open — see [Known
+   limitation](#known-limitation-identity-sourcing))
 3. A zero-knowledge proof is generated **on the user's own device**, proving
-   "birthdate + 18 years is in the past" — without the birthdate itself ever
+   "birthdate + 18 years is in the past, and this attestation is genuinely
+   signed by a registered provider" — without the birthdate itself ever
    leaving the device
 4. This proof is submitted as a transaction to the Midnight network
 5. If the proof is valid, the contract stores `true` for that user's ID —
@@ -34,10 +38,18 @@ It never shows or stores:
 ## How age verification actually works
 
 ```compact
-witness localBirthTimestamp(): Uint<64>;
+witness getAttestedBirthWitness(): [Uint<64>, Schnorr_SchnorrSignature, Uint<16>];
 
 export circuit verifyAge(userId: Bytes<32>): [] {
-  const birthTimestamp = localBirthTimestamp();
+  const [birthTimestamp, signature, providerId] = getAttestedBirthWitness();
+
+  assert(providers.member(disclose(providerId)), "Attestation provider not registered");
+  const providerPk = providers.lookup(disclose(providerId));
+
+  const userIdHash: Field = transientHash<Bytes<32>>(userId);
+  const msg: Vector<2, Field> = [disclose(birthTimestamp) as Field, userIdHash];
+  Schnorr_schnorrVerify<2>(msg, signature, providerPk);
+
   const minAgeSeconds = 18 * 365 * 24 * 60 * 60;
   const cutoff = (birthTimestamp + minAgeSeconds) as Uint<64>;
   assert(blockTimeGte(disclose(cutoff)), "User does not meet minimum age requirement");
@@ -45,9 +57,20 @@ export circuit verifyAge(userId: Bytes<32>): [] {
 }
 ```
 
-**`witness localBirthTimestamp()`** — a value supplied locally by the user's
-own app/device, never sent to the network. In Compact, this is how you feed
-private, off-chain information into a circuit.
+**`witness getAttestedBirthWitness()`** — supplied locally by the user's own
+app/device, never sent to the network: the birthdate a trusted attestation
+provider signed, the Schnorr signature itself, and which registered provider
+produced it.
+
+**Signature verification** — before trusting the birthdate at all, the
+circuit checks that `providerId` is a provider the contract admin has
+registered (see [Provider registry](#provider-registry-and-admin-role)
+below), then verifies the Schnorr signature over `[birthTimestamp,
+transientHash(userId)]` against that provider's public key. Hashing `userId`
+into the signed message binds the attestation to *this* identity, so a
+signature issued for one user can't be replayed to verify a different one.
+This is what closes the old fraud gap — see
+[Known limitation](#known-limitation-identity-sourcing) below.
 
 **`blockTimeGte(x)`** — checks the *actual current time on the blockchain*
 (not something the user can fake) and returns true if it's on/after `x`. This
@@ -56,54 +79,62 @@ they could lie about), the contract computes a cutoff timestamp
 (`birthdate + 18 years`) and asks the *chain* whether that moment has already
 passed.
 
-**`disclose(cutoff)`** — Compact requires explicitly acknowledging any time a
-value derived from private data (like the cutoff, derived from birthdate) is
-used somewhere that could leak information about it. Here, comparing the
-cutoff against the public clock technically reveals a little info (roughly
-"was this person's 18th birthday before or after block time X"), so Compact
-forces us to consciously opt into that with `disclose()`. This is a safety
-feature, not a bug — it stops accidental private-data leaks at compile time.
+**`disclose(...)`** — Compact requires explicitly acknowledging any time a
+value derived from private data (like the cutoff, derived from birthdate, or
+the provider/user IDs used as ledger map keys) is used somewhere that could
+leak information about it or becomes a public ledger operation. This is a
+safety feature, not a bug — it stops accidental private-data leaks at compile
+time.
 
-**No explicit "false" is ever stored.** If the `assert` fails, proof
-generation fails, and the transaction never gets submitted at all. "Not
-verified" = no transaction happened, not a stored `false` value.
+**No explicit "false" is ever stored.** If either `assert` fails — bad
+signature or too young — proof generation fails, and the transaction never
+gets submitted at all. "Not verified" = no transaction happened, not a stored
+`false` value.
 
-## Known limitation: self-attested birthdate
+## Provider registry and admin role
 
-**Right now, `localBirthTimestamp()` just trusts whatever value the app gives
-it — there is no fraud resistance yet.** A malicious user could make their
-own app return a fake birthdate, and the contract has no way to detect this.
-This version proves the *mechanism* (private input → ZK proof → on-chain
-pass/fail) works correctly, but is **not safe for real use** as-is.
-
-### Planned upgrade: signed attestation
-
-The fix, modeled on Midnight's official
+Modeled on Midnight's official
 [`example-zkloan`](https://github.com/midnightntwrk/example-zkloan) reference
-app: instead of trusting a bare witness value, a **trusted attestation
-service** (a stand-in for a real identity/KYC provider) signs the user's
-birthdate with a Schnorr signature (on the Jubjub curve). The circuit then:
+app (its `schnorr.compact` polyfill is vendored verbatim into
+[`contracts/schnorr.compact`](contracts/schnorr.compact), since
+`jubjubSchnorrVerify` isn't yet in the compiler's standard library):
 
-1. Verifies that signature on-chain via `jubjubSchnorrVerify`, proving the
-   birthdate really came from the registered trusted provider
-2. Only then runs the same `blockTimeGte` age check as today
+- `providers: Map<Uint<16>, JubjubPoint>` — the registry of trusted
+  attestation providers' public keys, keyed by an admin-assigned ID.
+- `contractAdmin: Bytes<32>` — set once in the constructor to
+  `deriveAdminPublicKey(getAdminSecret())`. Deliberately *not* derived from
+  `ownPublicKey()`, which is a value the prover merely claims with no
+  cryptographic binding to whoever actually holds the corresponding secret.
+- `registerProvider(providerId, providerPk)` / `removeProvider(providerId)` —
+  admin-gated circuits (`assert(contractAdmin == deriveAdminPublicKey(getAdminSecret()), ...)`)
+  for managing the registry.
 
-This closes the fraud gap: a user can no longer just invent a birthdate,
-since it has to be signed by an authority the contract explicitly trusts
-(registered once via a `registerProvider` circuit).
+## Known limitation: identity-sourcing
 
-This is the next planned step, not yet implemented.
+**The signature-verification mechanism is now real, but who's allowed to
+*be* a registered attestation provider is still unresolved.** `verifyAge`
+now genuinely rejects a forged or self-attested birthdate — see the
+simulator tests in
+[`src/test/age-verify.simulator.test.ts`](src/test/age-verify.simulator.test.ts)
+for tampered signatures, unregistered providers, and cross-user replay.
+What's still open is which real-world identity/KYC provider actually earns a
+slot in the `providers` registry, and how that registration process itself
+is secured — see [Open questions](#open-questions--next-steps).
 
 ## Project structure
 
 ```
 age-verify-dapp/
 ├── contracts/
-│   ├── age-verify.compact         # the Compact contract (source of truth)
-│   ├── index.ts                   # wires up the compiled contract + witness implementation
-│   └── managed/age-verify/        # compiler output (generated — don't hand-edit)
+│   ├── age-verify.compact             # the Compact contract (source of truth)
+│   ├── schnorr.compact                # vendored Schnorr-on-Jubjub polyfill (from example-zkloan)
+│   ├── index.ts                       # wires up the compiled contract + witness implementation
+│   └── managed/age-verify/            # compiler output (generated — don't hand-edit)
 ├── src/
-│   ├── test/age-verify.test.ts    # deploy + verify + reject tests, run against local devnet
+│   ├── test/age-verify.test.ts            # deploy + register + verify + reject, run against local devnet
+│   ├── test/age-verify.simulator.ts       # in-memory circuit simulator, no devnet needed
+│   ├── test/age-verify.simulator.test.ts  # fast edge-case coverage (forged sigs, replay, admin auth, ...)
+│   ├── test/utils/schnorr.ts              # off-chain Schnorr signing helpers for tests
 │   ├── wallet.ts, providers.ts, config.ts   # from original hello-world scaffolding
 ├── package.json
 ```
@@ -126,21 +157,39 @@ yarn env:down
 
 ## Test coverage today
 
+Devnet integration (`src/test/age-verify.test.ts`, needs `yarn env:up`):
+
 | Test | What it checks |
 |---|---|
-| Deploys the contract | Contract deploys cleanly, initial ledger state is empty |
-| Verifies an adult user (should succeed) | Birthdate from year 2000 → proof succeeds, `verifiedUsers` map shows `true` |
-| Rejects an underage user (should fail) | Birthdate from ~1 minute ago → proof generation fails, transaction never submitted |
+| Deploys the contract | Contract deploys cleanly, constructor sets `contractAdmin` |
+| Registers the trusted attestation provider | `registerProvider` succeeds, `providers` map shows the new entry |
+| Verifies an adult user (should succeed) | Birthdate from year 2000, validly signed → proof succeeds, `verifiedUsers` shows `true` |
+| Rejects an underage user (should fail) | Birthdate from ~1 minute ago, validly signed → age-check assertion fails, no transaction submitted |
+
+Fast simulator suite (`src/test/age-verify.simulator.test.ts`, no devnet needed):
+
+| Test | What it checks |
+|---|---|
+| Default provider registered / empty ledger | Initial state after construction |
+| Verifies an adult with a valid attestation | Happy path, in-memory |
+| Rejects an underage user (valid signature) | Pure age-check failure |
+| Rejects a tampered signature | Schnorr verification catches a modified response |
+| Rejects an unregistered provider | `providers.member` check |
+| Rejects after a provider is removed | Registry removal takes effect immediately |
+| Rejects cross-user replay | Signature for user A's id fails for user B (`transientHash(userId)` binding) |
+| Non-admin `registerProvider` / `removeProvider` | Admin-secret authorization enforced |
 
 ## Open questions / next steps
 
-- [ ] Replace self-attested witness with signed attestation (see above)
+- [x] Replace self-attested witness with signed attestation (see above)
 - [ ] Decide on the actual Android frontend approach (deferred — options
       discussed: hybrid/Capacitor wrapping a JS frontend using `midnight-js`
       directly, React Native, or a fully native Kotlin app using the
       community **Kuira Android SDK**, which supports on-device ZK proving)
 - [ ] Decide on real-world identity sourcing for the attestation service
-      (who actually verifies the birthdate before it gets signed?)
+      (who actually verifies the birthdate before it gets signed, and who's
+      allowed to call `registerProvider` in production — see
+      [Known limitation](#known-limitation-identity-sourcing))
 - [ ] Security review pass before any real deployment (see Midnight's
       `security` skill / smart contract security docs — witness trust,
       commitment/nullifier design, front-running resistance)
