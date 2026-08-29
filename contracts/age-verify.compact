@@ -1,0 +1,14 @@
+pragma language_version 0.23;
+import CompactStandardLibrary;
+
+export ledger verifiedUsers: Map<Bytes<32>, Boolean>;
+
+witness localBirthTimestamp(): Uint<64>;
+
+export circuit verifyAge(userId: Bytes<32>): [] {
+  const birthTimestamp = localBirthTimestamp();
+  const minAgeSeconds = 18 * 365 * 24 * 60 * 60;
+  const cutoff = (birthTimestamp + minAgeSeconds) as Uint<64>;
+  assert(blockTimeGte(disclose(cutoff)), "User does not meet minimum age requirement");
+  verifiedUsers.insert(disclose(userId), true);
+}

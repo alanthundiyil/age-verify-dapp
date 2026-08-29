@@ -14,10 +14,15 @@ import { Contract } from './managed/hello-world/contract/index.js';
 const currentDir = path.resolve(new URL(import.meta.url).pathname, '..');
 export const zkConfigPath = path.resolve(currentDir, 'managed', 'hello-world');
 
+// A mutable box so tests can swap the "fake birthdate" between cases
+export const testBirthTimestamp = { value: 0n };
+
 export const CompiledHelloWorldContract = CompiledContract.make(
-  'HelloWorldContract',
+  'AgeVerifyContract',
   Contract,
 ).pipe(
-  CompiledContract.withVacantWitnesses,
+  CompiledContract.withWitnesses({
+  localBirthTimestamp: (context: any) => [context.privateState, testBirthTimestamp.value],
+}),
   CompiledContract.withCompiledFileAssets(zkConfigPath),
 );
