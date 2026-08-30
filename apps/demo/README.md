@@ -1,7 +1,10 @@
-# Bouncer age-check demo
+# Midnight Bouncer
+
+*Checks your age. Keeps your secrets.*
 
 A minimal demo of what a real "bouncer scans a guest's phone" flow would
-look like on top of the age-verify contract: two web pages, no app install.
+look like on top of the age-verify contract: two web pages, installable as
+a Progressive Web App (PWA) on a phone's home screen — no app store needed.
 
 It solves a specific problem a static "I'm verified" QR code can't: proving
 the phone being scanned, right now, actually controls the identity that's
@@ -35,6 +38,18 @@ yarn demo:dev
 Then open `http://localhost:5173/?role=guest` in one browser window/tab and
 `http://localhost:5173/?role=bouncer` in another — two windows on the same
 machine work fine and is the easiest way to try this.
+
+## Installing it as an app
+
+Since this is a PWA, a phone (or desktop Chrome) can install it like a real
+app instead of just bookmarking a tab: open `http://localhost:5173/` (or a
+real deployed URL — installability needs `https:` or `localhost`), then use
+the browser's **"Add to Home Screen"** (iOS Safari) or **"Install app"**
+(Chrome/Edge) option. It installs as **Midnight Bouncer**, with its own icon
+and no browser chrome, and offers two shortcuts (long-press the icon on
+Android, or right-click it on desktop) straight to the guest and bouncer
+views. `yarn demo:dev` runs the PWA in dev mode already — no build step
+needed to try installing it locally.
 
 ## Trying the flow
 
