@@ -33,7 +33,8 @@ export function initAdmin(root: HTMLElement): void {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     submitBtn.disabled = true;
-    statusEl.textContent = 'Signing and submitting — this runs a real zero-knowledge proof, usually 20–60 seconds…';
+    statusEl.innerHTML =
+      '<span class="spinner"></span>Signing and submitting — this runs a real zero-knowledge proof, usually 20–60 seconds…';
 
     try {
       const res = await fetch('/api/verify-guest', {

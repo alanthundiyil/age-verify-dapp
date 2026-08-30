@@ -10,8 +10,14 @@ const LINKS: Array<{ role: Role; label: string }> = [
 ];
 
 export function renderNav(current: Role): string {
-  const items = LINKS.map(({ role, label }) =>
-    role === current ? `<strong>${label}</strong>` : `<a href="?role=${role}">${label}</a>`,
-  ).join(' &middot; ');
-  return `<nav style="margin-bottom:1.5rem; font-size:0.9em;"><a href="/">Home</a> &middot; ${items}</nav>`;
+  const tabs = LINKS.map(
+    ({ role, label }) =>
+      `<a href="?role=${role}" class="tab${role === current ? ' tab--active' : ''}">${label}</a>`,
+  ).join('');
+  return `
+    <div class="topbar">
+      <a href="/" class="home-link">&larr; Home</a>
+      <nav class="tabbar">${tabs}</nav>
+    </div>
+  `;
 }

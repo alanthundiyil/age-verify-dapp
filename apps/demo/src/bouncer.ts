@@ -14,11 +14,14 @@ export function initBouncer(root: HTMLElement): void {
     <button id="new-check">1. Start new check</button>
     <canvas id="qr-out" style="display:none;"></canvas>
     <button id="scan-response" disabled>2. Scan guest's badge</button>
-    <video id="video" autoplay playsinline muted style="display:none;"></video>
+    <div id="scan-wrap" class="scan-frame" style="display:none;">
+      <video id="video" autoplay playsinline muted></video>
+    </div>
     <p id="result"></p>
   `;
 
   const qrOutEl = root.querySelector<HTMLCanvasElement>('#qr-out')!;
+  const scanWrapEl = root.querySelector<HTMLElement>('#scan-wrap')!;
   const videoEl = root.querySelector<HTMLVideoElement>('#video')!;
   const resultEl = root.querySelector<HTMLElement>('#result')!;
   const newCheckBtn = root.querySelector<HTMLButtonElement>('#new-check')!;
@@ -26,7 +29,7 @@ export function initBouncer(root: HTMLElement): void {
 
   newCheckBtn.addEventListener('click', async () => {
     scan?.stop();
-    videoEl.style.display = 'none';
+    scanWrapEl.style.display = 'none';
     setStatus('');
     currentChallenge = randomBytes(16);
     qrOutEl.style.display = '';
@@ -37,10 +40,10 @@ export function initBouncer(root: HTMLElement): void {
   scanBtn.addEventListener('click', () => {
     if (!currentChallenge) return;
     scan?.stop();
-    videoEl.style.display = '';
+    scanWrapEl.style.display = '';
     setStatus('Point your camera at the guest’s badge QR code…');
     scan = startScanning(videoEl, (text) => {
-      videoEl.style.display = 'none';
+      scanWrapEl.style.display = 'none';
       checkResponse(text, currentChallenge!).catch((err) => {
         showResult(false, `Error: ${(err as Error).message}`);
       });

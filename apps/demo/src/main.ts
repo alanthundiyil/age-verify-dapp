@@ -8,7 +8,7 @@ const role = new URLSearchParams(location.search).get('role');
 
 if (role === 'guest') {
   initGuest(root).catch((err) => {
-    root.innerHTML = `<p style="color:crimson">Failed to initialize: ${(err as Error).message}</p>`;
+    root.innerHTML = `<p style="color:var(--danger)">Failed to initialize: ${(err as Error).message}</p>`;
   });
 } else if (role === 'bouncer') {
   initBouncer(root);
@@ -16,11 +16,24 @@ if (role === 'guest') {
   initAdmin(root);
 } else {
   root.innerHTML = `
+    <img src="/icons/icon-192.png" alt="" width="88" height="88" style="margin: 1rem auto; display:block;">
     <h1>Midnight Bouncer</h1>
-    <p>Open one of these on two different browser windows/devices:</p>
-    <p><a href="?role=guest">I'm a guest</a></p>
-    <p><a href="?role=bouncer">I'm the bouncer</a></p>
+    <p class="tagline">Checks your age. Keeps your secrets.</p>
+
+    <a class="role-card" href="?role=guest">
+      <strong>I'm a guest</strong>
+      <span>Show that you're verified 18+</span>
+    </a>
+    <a class="role-card" href="?role=bouncer">
+      <strong>I'm the bouncer</strong>
+      <span>Scan a guest's badge</span>
+    </a>
+
     <hr>
-    <p style="font-size:0.9em;"><a href="?role=admin">Attestation Provider (verify a guest — demo setup only)</a></p>
+
+    <a class="role-card role-card--secondary" href="?role=admin">
+      <strong>Attestation Provider</strong>
+      <span>Verify a guest — demo setup only</span>
+    </a>
   `;
 }

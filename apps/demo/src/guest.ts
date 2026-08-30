@@ -18,12 +18,15 @@ export async function initGuest(root: HTMLElement): Promise<void> {
     <button id="show-badge">Show my badge to a bouncer</button>
     <button id="forget" class="secondary">Forget this identity</button>
     <p id="status"></p>
-    <video id="video" autoplay playsinline muted style="display:none;"></video>
+    <div id="scan-wrap" class="scan-frame" style="display:none;">
+      <video id="video" autoplay playsinline muted></video>
+    </div>
     <canvas id="qr-out" style="display:none;"></canvas>
   `;
 
   const userIdEl = root.querySelector<HTMLElement>('#user-id')!;
   const statusEl = root.querySelector<HTMLElement>('#status')!;
+  const scanWrapEl = root.querySelector<HTMLElement>('#scan-wrap')!;
   const videoEl = root.querySelector<HTMLVideoElement>('#video')!;
   const qrOutEl = root.querySelector<HTMLCanvasElement>('#qr-out')!;
   const showBadgeBtn = root.querySelector<HTMLButtonElement>('#show-badge')!;
@@ -39,12 +42,12 @@ export async function initGuest(root: HTMLElement): Promise<void> {
 
   showBadgeBtn.addEventListener('click', () => {
     scan?.stop();
-    videoEl.style.display = '';
+    scanWrapEl.style.display = '';
     qrOutEl.style.display = 'none';
     statusEl.textContent = 'Point your camera at the bouncer’s challenge QR code…';
 
     scan = startScanning(videoEl, (text) => {
-      videoEl.style.display = 'none';
+      scanWrapEl.style.display = 'none';
       handleChallenge(text).catch((err) => {
         statusEl.textContent = `Error: ${(err as Error).message}`;
       });
