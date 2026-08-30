@@ -1,7 +1,7 @@
-// The actual "REEK attests this guest's birthdate" logic, shared between
-// the CLI (scripts/seed-verified-user.ts) and the admin page's backend
-// endpoint (apps/demo/server.ts), so both go through the exact same code
-// path instead of duplicating it.
+// The actual "attestation provider signs this guest's birthdate and it goes
+// on-chain" logic, shared between the CLI (scripts/seed-verified-user.ts)
+// and the admin page's backend endpoint (apps/demo/server.ts), so both go
+// through the exact same code path instead of duplicating it.
 import { submitCallTx } from '@midnight-ntwrk/midnight-js-contracts';
 import { Bytes32Descriptor, transientHash } from '@midnight-ntwrk/midnight-js-protocol/compact-runtime';
 import { CompiledAgeVerifyContract, Contract, testAttestation } from '../contracts/index.js';

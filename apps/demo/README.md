@@ -20,9 +20,9 @@ the Jubjub/Schnorr attestation signature the contract verifies).
 # 1. Local devnet, same as the contract tests
 yarn env:up
 
-# 2. One-time: deploy the contract and register a demo attestation provider
-#    ("REEK" in our conversation — the trusted party whose signature the
-#    contract accepts). Only needs to run once per devnet.
+# 2. One-time: deploy the contract and register a demo attestation
+#    provider — the trusted party whose signature the contract accepts.
+#    Only needs to run once per devnet.
 yarn demo:init
 
 # 3. Backend and frontend, in two terminals
@@ -59,9 +59,9 @@ needed to try installing it locally.
 
 ## The admin page
 
-`http://localhost:5173/?role=admin` is REEK's (the trusted attestation
-provider's) internal tool — the page itself explains what it's doing and
-why it's kept separate from the guest page. Deliberately **not** linked
+`http://localhost:5173/?role=admin` is the trusted attestation provider's
+internal tool — the page itself explains what it's doing and why it's kept
+separate from the guest page. Deliberately **not** linked
 prominently from anywhere a real guest would see; it's reachable via a
 small link on the landing page for demo convenience only. The backend only
 accepts `/api/verify-guest` requests from `localhost` (see

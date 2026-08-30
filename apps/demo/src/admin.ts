@@ -1,28 +1,15 @@
+import { renderNav } from './nav.js';
+
 export function initAdmin(root: HTMLElement): void {
   root.innerHTML = `
-    <h1>REEK — Attestation Provider</h1>
+    ${renderNav('admin')}
+    <h1>Attestation Provider</h1>
     <p style="text-align:left; background:#1a1f3a; padding:0.75rem 1rem; border-radius:8px;">
-      <strong>What this page actually is:</strong> in a real deployment, someone
-      has to actually check a person's ID and confirm their birthdate before
-      the contract will ever trust it — that's "REEK," the trusted
-      attestation provider this project keeps referring to. This page stands
-      in for REEK's internal tool. Clicking "Verify this guest" below signs
-      the birthdate you type with REEK's private key (never sent to your
-      browser — it stays on the server, in <code>deployment.json</code>) and
-      submits it as a real transaction, which is what makes
-      <code>verifiedUsers.member(userId)</code> become <code>true</code> for
-      that ID on the blockchain.
-    </p>
-    <p style="text-align:left; background:#3a1a1a; padding:0.75rem 1rem; border-radius:8px;">
-      <strong>Why this isn't on the guest page:</strong> whoever can click
-      this button can mark <em>any</em> ID as verified for <em>any</em>
-      birthdate — no real ID check happens here, it's whatever you type in.
-      That's the entire point of keeping REEK separate from the guest: the
-      guest proves who signed their attestation; they can never sign their
-      own. In a real product, a page with this much power would need to sit
-      behind real authentication, restricted to REEK's own staff — here it's
-      open for demo purposes only, and the backend only accepts requests
-      from this same machine (see apps/demo/server.ts).
+      Stands in for the trusted party that would check a real ID in
+      production. Signing happens server-side — your browser never sees any
+      private key. It's kept off the guest page on purpose: whoever can use
+      this can mark <em>any</em> ID as verified for <em>any</em> birthdate,
+      so a real deployment would lock it behind real authentication.
     </p>
     <form id="verify-form">
       <label for="user-id">Guest's ID (from the guest page)</label><br>

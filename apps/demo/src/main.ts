@@ -21,6 +21,6 @@ if (role === 'guest') {
     <p><a href="?role=guest">I'm a guest</a></p>
     <p><a href="?role=bouncer">I'm the bouncer</a></p>
     <hr>
-    <p style="font-size:0.9em;"><a href="?role=admin">REEK admin (verify a guest — demo setup only)</a></p>
+    <p style="font-size:0.9em;"><a href="?role=admin">Attestation Provider (verify a guest — demo setup only)</a></p>
   `;
 }

@@ -1,7 +1,7 @@
 // Shared shape for deployment.json, the file that lets the one-time setup
 // step (scripts/demo-init.ts) and the repeatable per-guest step
 // (scripts/seed-verified-user.ts, apps/demo/server.ts) agree on which
-// deployed contract and demo attestation provider ("REEK") to use.
+// deployed contract and demo attestation provider to use.
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { ContractAddress } from '@midnight-ntwrk/midnight-js-protocol/compact-runtime';

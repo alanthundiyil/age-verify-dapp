@@ -1,4 +1,4 @@
-// Simulates "REEK attested this guest's birthdate" for the bouncer demo
+// Simulates the attestation provider signing this guest's birthdate for the bouncer demo
 // (apps/demo/) — signs and submits verifyAge for one guest against the
 // contract and provider set up by `yarn demo:init`. This is a stand-in for
 // the real KYC UI this project doesn't have yet (see NOTES.md's "Known

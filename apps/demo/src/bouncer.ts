@@ -2,12 +2,14 @@ import { verify, userIdFromPublicKey, bytesEqual } from './identity.js';
 import { startScanning, renderQr, type ScanHandle } from './qr.js';
 import { encodeChallenge, decodeResponse } from './protocol.js';
 import { randomBytes, toHex, type Bytes } from './bytes.js';
+import { renderNav } from './nav.js';
 
 export function initBouncer(root: HTMLElement): void {
   let scan: ScanHandle | null = null;
   let currentChallenge: Bytes | null = null;
 
   root.innerHTML = `
+    ${renderNav('bouncer')}
     <h1>Bouncer</h1>
     <button id="new-check">1. Start new check</button>
     <canvas id="qr-out" style="display:none;"></canvas>

@@ -1,15 +1,19 @@
 import { ensureIdentity, clearIdentity, sign } from './identity.js';
 import { startScanning, renderQr, type ScanHandle } from './qr.js';
 import { decodeChallenge, encodeResponse } from './protocol.js';
+import { renderNav } from './nav.js';
 
 export async function initGuest(root: HTMLElement): Promise<void> {
   const identity = await ensureIdentity();
   let scan: ScanHandle | null = null;
 
   root.innerHTML = `
+    ${renderNav('guest')}
     <h1>Guest</h1>
     <p>This is your identity on this device. Give the ID below to whoever
-       runs the one-time "get verified" step (<code>yarn demo:seed</code>).</p>
+       runs the one-time "get verified" step (the
+       <a href="?role=admin">Attestation Provider</a> page, or
+       <code>yarn demo:seed</code>).</p>
     <p><strong>Your ID:</strong> <code id="user-id"></code></p>
     <button id="forget">Forget this identity</button>
     <hr>
