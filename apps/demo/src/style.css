@@ -145,3 +145,79 @@ canvas {
   color: var(--danger);
   border: 1px solid var(--danger);
 }
+
+/* Corner-bracket viewfinder overlay on the camera feed, so it reads as
+   "a scanner" rather than a raw webcam preview. Four L-shaped brackets
+   drawn as background gradients on an inset pseudo-element. */
+.scan-frame {
+  position: relative;
+  display: inline-block;
+}
+.scan-frame video {
+  display: block;
+}
+.scan-frame::before {
+  content: '';
+  position: absolute;
+  inset: 12%;
+  pointer-events: none;
+  background:
+    linear-gradient(to right, var(--accent) 4px, transparent 4px) top left / 28px 4px no-repeat,
+    linear-gradient(to bottom, var(--accent) 4px, transparent 4px) top left / 4px 28px no-repeat,
+    linear-gradient(to left, var(--accent) 4px, transparent 4px) top right / 28px 4px no-repeat,
+    linear-gradient(to bottom, var(--accent) 4px, transparent 4px) top right / 4px 28px no-repeat,
+    linear-gradient(to right, var(--accent) 4px, transparent 4px) bottom left / 28px 4px no-repeat,
+    linear-gradient(to top, var(--accent) 4px, transparent 4px) bottom left / 4px 28px no-repeat,
+    linear-gradient(to left, var(--accent) 4px, transparent 4px) bottom right / 28px 4px no-repeat,
+    linear-gradient(to top, var(--accent) 4px, transparent 4px) bottom right / 4px 28px no-repeat;
+}
+
+.spinner {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border: 3px solid var(--surface-border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  vertical-align: middle;
+  margin-right: 0.5em;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.role-card {
+  display: block;
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin: 0.75rem 0;
+  text-decoration: none;
+  color: var(--text);
+  transition:
+    border-color 0.15s ease,
+    transform 0.1s ease;
+}
+.role-card:hover {
+  border-color: var(--accent);
+}
+.role-card:active {
+  transform: scale(0.98);
+}
+.role-card strong {
+  display: block;
+  font-size: 1.1rem;
+  color: var(--accent);
+  margin-bottom: 0.25rem;
+}
+.role-card span {
+  color: var(--text-muted);
+  font-size: 0.9em;
+}
+.role-card--secondary strong {
+  color: var(--text);
+}
