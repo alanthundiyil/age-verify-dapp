@@ -5,7 +5,12 @@ import QRCode from 'qrcode';
 import jsQR from 'jsqr';
 
 export async function renderQr(canvas: HTMLCanvasElement, text: string): Promise<void> {
-  await QRCode.toCanvas(canvas, text, { width: 280, margin: 2 });
+  // Rendered larger than a typical printed QR code, since this is scanned
+  // screen-to-camera (phone camera pointed at another screen) — bigger
+  // on-screen modules are easier for a webcam to resolve at a comfortable
+  // distance, and avoid the moiré/glare issues that plague small
+  // screen-photographed codes.
+  await QRCode.toCanvas(canvas, text, { width: 360, margin: 2 });
 }
 
 export type ScanHandle = { stop: () => void };
@@ -34,7 +39,10 @@ export function startScanning(video: HTMLVideoElement, onResult: (text: string) 
       canvas.height = video.videoHeight;
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const code = jsQR(frame.data, frame.width, frame.height);
+      // Our QR codes are always drawn dark-on-light, never inverted, so
+      // skip jsQR's inverted-color scan pass — it roughly halves the work
+      // per frame for no benefit here.
+      const code = jsQR(frame.data, frame.width, frame.height, { inversionAttempts: 'dontInvert' });
       if (code) {
         const text = code.data;
         stop();
@@ -46,7 +54,13 @@ export function startScanning(video: HTMLVideoElement, onResult: (text: string) 
   }
 
   navigator.mediaDevices
-    .getUserMedia({ video: { facingMode: 'environment' } })
+    // Hint a higher resolution — browsers often default to something low
+    // (e.g. 640x480) absent a constraint, which makes a screen-displayed QR
+    // code harder to resolve. "ideal" is a preference, not a hard
+    // requirement, so this degrades gracefully on cameras that can't do it.
+    .getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+    })
     .then((s) => {
       if (stopped) {
         s.getTracks().forEach((track) => track.stop());

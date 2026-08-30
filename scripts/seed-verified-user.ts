@@ -1,4 +1,4 @@
-// Simulates "REEK attested this guest's birthdate" for the bouncer demo
+// Simulates the attestation provider signing this guest's birthdate for the bouncer demo
 // (apps/demo/) — signs and submits verifyAge for one guest against the
 // contract and provider set up by `yarn demo:init`. This is a stand-in for
 // the real KYC UI this project doesn't have yet (see NOTES.md's "Known
@@ -7,19 +7,16 @@
 // Usage: yarn demo:seed --userId <64 hex chars> --birthdate <YYYY-MM-DD>
 import pino from 'pino';
 import { setNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
-import { submitCallTx } from '@midnight-ntwrk/midnight-js-contracts';
-import { Bytes32Descriptor, transientHash } from '@midnight-ntwrk/midnight-js-protocol/compact-runtime';
 import type { EnvironmentConfiguration } from '@midnight-ntwrk/testkit-js';
 import { getConfig } from '../src/config.js';
 import { MidnightWalletProvider, syncWallet } from '../src/wallet.js';
 import { buildProviders, type HelloWorldProviders } from '../src/providers.js';
-import { CompiledAgeVerifyContract, Contract, testAttestation, zkConfigPath } from '../contracts/index.js';
-import { schnorrSign } from '../src/test/utils/schnorr.js';
+import { zkConfigPath } from '../contracts/index.js';
 import { readDeployment } from './deployment.js';
+import { verifyGuest } from './verify-guest.js';
 
 // Must match src/test/age-verify.test.ts.
 const ALICE_LOCAL_SEED = '0000000000000000000000000000000000000000000000000000000000000001';
-const PRIVATE_STATE_ID = 'DemoSeedAgeVerifyState';
 
 function parseArgs(argv: string[]): { userId: string; birthdate: string } {
   const values: Record<string, string> = {};
@@ -66,30 +63,8 @@ try {
   await syncWallet(logger, wallet.wallet);
   const providers: HelloWorldProviders = buildProviders(wallet, zkConfigPath, config);
 
-  // buildProviders() creates a fresh, uniquely-named private-state store on
-  // every process run (see src/providers.ts), so the contract's private
-  // state — just `{}`, since everything real flows through the witnesses'
-  // closure over testAttestation — needs registering here every run.
-  providers.privateStateProvider.setContractAddress(deployment.contractAddress);
-  await providers.privateStateProvider.set(PRIVATE_STATE_ID, {});
-
-  const providerId = BigInt(deployment.providerId);
-  const providerSk = BigInt(`0x${deployment.providerSk}`);
-  const userIdHash = transientHash(Bytes32Descriptor, userId);
-  testAttestation.value = {
-    birthTimestamp,
-    signature: schnorrSign(providerSk, [birthTimestamp, userIdHash]),
-    providerId,
-  };
-
   logger.info(`Submitting verifyAge for userId ${userIdHex} (birthdate ${birthdate})...`);
-  await submitCallTx<Contract, 'verifyAge'>(providers, {
-    compiledContract: CompiledAgeVerifyContract,
-    contractAddress: deployment.contractAddress,
-    privateStateId: PRIVATE_STATE_ID,
-    circuitId: 'verifyAge',
-    args: [userId],
-  });
+  await verifyGuest(providers, deployment, userId, birthTimestamp);
 
   logger.info(`Done. ${userIdHex} is now verified 18+ on ${deployment.contractAddress}.`);
 } finally {

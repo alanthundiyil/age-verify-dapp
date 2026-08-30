@@ -1,8 +1,7 @@
 // One-time setup for the bouncer demo (apps/demo/): deploys the age-verify
-// contract and registers a demo attestation provider ("REEK" in our
-// conversation) — the trusted party whose signature the contract accepts.
-// Run this once per devnet; yarn demo:seed handles verifying individual
-// guests against it afterward.
+// contract and registers a demo attestation provider — the trusted party
+// whose signature the contract accepts. Run this once per devnet; yarn
+// demo:seed handles verifying individual guests against it afterward.
 //
 // Usage: yarn demo:init
 import pino from 'pino';
@@ -56,7 +55,7 @@ try {
   logger.info(`Deployed at ${contractAddress}`);
 
   const provider = generateProviderKeyPair();
-  logger.info('Registering the demo attestation provider ("REEK")...');
+  logger.info('Registering the demo attestation provider...');
   await submitCallTx<Contract, 'registerProvider'>(providers, {
     compiledContract: CompiledAgeVerifyContract,
     contractAddress,

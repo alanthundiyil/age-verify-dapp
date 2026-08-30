@@ -1,22 +1,147 @@
+:root {
+  --bg: #0b1026;
+  --surface: #161c3d;
+  --surface-border: #2a3160;
+  --text: #f1f0f5;
+  --text-muted: #9aa0c4;
+  --accent: #f5d76e;
+  --accent-text: #0b1026;
+  --success: #6fcf7d;
+  --danger: #ff6b6b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
 body {
   font-family: system-ui, sans-serif;
   max-width: 480px;
   margin: 2rem auto;
   padding: 0 1rem;
   text-align: center;
+  background: var(--bg);
+  color: var(--text);
+}
+
+h1 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+a {
+  color: var(--accent);
+}
+
+nav {
+  color: var(--text-muted);
+}
+nav a {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+nav a:hover {
+  color: var(--accent);
+}
+nav strong {
+  color: var(--accent);
 }
 
 button {
   font-size: 1rem;
-  padding: 0.6rem 1rem;
+  font-weight: 600;
+  padding: 0.7rem 1.4rem;
   margin: 0.5rem 0.25rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-text);
+  cursor: pointer;
+  transition:
+    transform 0.1s ease,
+    opacity 0.15s ease;
+}
+button:hover:not(:disabled) {
+  opacity: 0.9;
+}
+button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+button.secondary {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--surface-border);
+}
+
+input {
+  font-size: 1rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid var(--surface-border);
+  background: var(--surface);
+  color: var(--text);
+}
+input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+label {
+  color: var(--text-muted);
+  font-size: 0.9em;
 }
 
 code {
   word-break: break-all;
+  background: var(--surface);
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
 }
 
-video, canvas {
+hr {
+  border: none;
+  border-top: 1px solid var(--surface-border);
+  margin: 1.5rem 0;
+}
+
+video,
+canvas {
   margin: 1rem auto;
-  border: 1px solid #ccc;
+  border-radius: 12px;
+  border: 1px solid var(--surface-border);
+  max-width: 100%;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  text-align: left;
+  margin: 1rem 0;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  padding: 0.75rem 1.5rem;
+  border-radius: 999px;
+  margin: 1rem 0;
+}
+.badge-success {
+  background: rgba(111, 207, 125, 0.15);
+  color: var(--success);
+  border: 1px solid var(--success);
+}
+.badge-fail {
+  background: rgba(255, 107, 107, 0.15);
+  color: var(--danger);
+  border: 1px solid var(--danger);
 }
