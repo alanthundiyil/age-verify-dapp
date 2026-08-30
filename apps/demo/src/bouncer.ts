@@ -43,10 +43,19 @@ export function initBouncer(root: HTMLElement): void {
     scanWrapEl.style.display = '';
     setStatus('Point your camera at the guest’s badge QR code…');
     scan = startScanning(videoEl, (text) => {
+      let decoded: ReturnType<typeof decodeResponse>;
+      try {
+        decoded = decodeResponse(text);
+      } catch {
+        // Not a (complete, valid) response QR yet — e.g. a misread frame.
+        // Keep scanning instead of giving up on one bad read.
+        return false;
+      }
       scanWrapEl.style.display = 'none';
-      checkResponse(text, currentChallenge!).catch((err) => {
+      checkResponse(decoded, currentChallenge!).catch((err) => {
         showResult(false, `Error: ${(err as Error).message}`);
       });
+      return true;
     });
   });
 
@@ -60,8 +69,8 @@ export function initBouncer(root: HTMLElement): void {
     resultEl.textContent = message;
   }
 
-  async function checkResponse(text: string, challenge: Bytes): Promise<void> {
-    const { userId, publicKeyRaw, challenge: signedChallenge, signature } = decodeResponse(text);
+  async function checkResponse(decoded: ReturnType<typeof decodeResponse>, challenge: Bytes): Promise<void> {
+    const { userId, publicKeyRaw, challenge: signedChallenge, signature } = decoded;
 
     if (!bytesEqual(signedChallenge, challenge)) {
       showResult(false, 'Stale or mismatched challenge — try again.');

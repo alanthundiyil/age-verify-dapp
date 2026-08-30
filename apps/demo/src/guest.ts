@@ -2,6 +2,7 @@ import { ensureIdentity, clearIdentity, sign } from './identity.js';
 import { startScanning, renderQr, type ScanHandle } from './qr.js';
 import { decodeChallenge, encodeResponse } from './protocol.js';
 import { renderNav } from './nav.js';
+import type { Bytes } from './bytes.js';
 
 export async function initGuest(root: HTMLElement): Promise<void> {
   const identity = await ensureIdentity();
@@ -47,15 +48,23 @@ export async function initGuest(root: HTMLElement): Promise<void> {
     statusEl.textContent = 'Point your camera at the bouncer’s challenge QR code…';
 
     scan = startScanning(videoEl, (text) => {
+      let challenge: Bytes;
+      try {
+        challenge = decodeChallenge(text);
+      } catch {
+        // Not a (complete, valid) challenge QR yet — e.g. a misread frame.
+        // Keep scanning instead of giving up on one bad read.
+        return false;
+      }
       scanWrapEl.style.display = 'none';
-      handleChallenge(text).catch((err) => {
+      handleChallenge(challenge).catch((err) => {
         statusEl.textContent = `Error: ${(err as Error).message}`;
       });
+      return true;
     });
   });
 
-  async function handleChallenge(text: string): Promise<void> {
-    const challenge = decodeChallenge(text);
+  async function handleChallenge(challenge: Bytes): Promise<void> {
     const signature = await sign(identity, challenge);
     const responseText = encodeResponse({
       userId: identity.userId,

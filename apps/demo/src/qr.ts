@@ -15,11 +15,14 @@ export async function renderQr(canvas: HTMLCanvasElement, text: string): Promise
 
 export type ScanHandle = { stop: () => void };
 
-// Opens the device camera on `video`, scans frames until a QR code decodes
-// successfully, calls `onResult` exactly once with the decoded text, then
-// stops the camera automatically. Call `.stop()` on the returned handle to
-// cancel early (e.g. the user navigates away before anything is scanned).
-export function startScanning(video: HTMLVideoElement, onResult: (text: string) => void): ScanHandle {
+// Opens the device camera on `video` and scans frames until `onResult`
+// returns `true` for one, then stops the camera automatically. `onResult`
+// returning `false` means "not a valid payload yet" — scanning continues,
+// since a single misread frame (motion blur, glare, a mid-transition
+// screen capture) is common and shouldn't kill the whole attempt. Call
+// `.stop()` on the returned handle to cancel early (e.g. the user
+// navigates away before anything is scanned).
+export function startScanning(video: HTMLVideoElement, onResult: (text: string) => boolean): ScanHandle {
   let stopped = false;
   let stream: MediaStream | null = null;
   const canvas = document.createElement('canvas');
@@ -43,10 +46,8 @@ export function startScanning(video: HTMLVideoElement, onResult: (text: string) 
       // skip jsQR's inverted-color scan pass — it roughly halves the work
       // per frame for no benefit here.
       const code = jsQR(frame.data, frame.width, frame.height, { inversionAttempts: 'dontInvert' });
-      if (code) {
-        const text = code.data;
+      if (code && onResult(code.data)) {
         stop();
-        onResult(text);
         return;
       }
     }
