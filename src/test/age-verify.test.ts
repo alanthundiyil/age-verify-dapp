@@ -6,7 +6,11 @@ import {
   submitCallTx,
   type DeployedContract,
 } from '@midnight-ntwrk/midnight-js-contracts';
-import type { ContractAddress } from '@midnight-ntwrk/midnight-js-protocol/compact-runtime';
+import {
+  type ContractAddress,
+  Bytes32Descriptor,
+  transientHash,
+} from '@midnight-ntwrk/midnight-js-protocol/compact-runtime';
 import {
   type EnvironmentConfiguration,
   waitForFunds,
@@ -21,12 +25,13 @@ import {
 } from '../wallet.js';
 import { buildProviders, type HelloWorldProviders } from '../providers.js';
 import {
-  CompiledAgeVerifyContract,   
+  CompiledAgeVerifyContract,
   Contract,
   ledger,
   zkConfigPath,
-  testBirthTimestamp,
+  testAttestation,
 } from '../../contracts/index.js';
+import { generateProviderKeyPair, schnorrSign } from './utils/schnorr.js';
 
 // Required for GraphQL subscriptions in Node.js
 // @ts-expect-error WebSocket global assignment for apollo
@@ -83,6 +88,17 @@ function resolveSecret(net: string): WalletSecret {
 
 // Fixed test "user id" — a stand-in for a real derived user identifier
 const TEST_USER_ID = new Uint8Array(32).fill(1);
+const TEST_USER_ID_HASH = transientHash(Bytes32Descriptor, TEST_USER_ID);
+const PROVIDER_ID = 1n;
+const provider = generateProviderKeyPair();
+
+function attestBirth(birthTimestamp: bigint) {
+  testAttestation.value = {
+    birthTimestamp,
+    signature: schnorrSign(provider.sk, [birthTimestamp, TEST_USER_ID_HASH]),
+    providerId: PROVIDER_ID,
+  };
+}
 
 describe(`Age Verify Contract (${network})`, () => {
   let wallet: MidnightWalletProvider;
@@ -160,10 +176,23 @@ describe(`Age Verify Contract (${network})`, () => {
     expect(contractAddress).toBeDefined();
   });
 
+  it('Registers the trusted attestation provider', async () => {
+    await submitCallTx<Contract, 'registerProvider'>(providers, {
+      compiledContract: CompiledAgeVerifyContract,
+      contractAddress,
+      privateStateId: PRIVATE_STATE_ID,
+      circuitId: 'registerProvider',
+      args: [PROVIDER_ID, provider.pk],
+    });
+
+    const state = await queryLedger(providers);
+    expect(state.providers.member(PROVIDER_ID)).toBe(true);
+  });
+
   it('Verifies an adult user (should succeed)', async () => {
     // year 2000 -> definitely 18+
-    testBirthTimestamp.value = BigInt(
-      Math.floor(new Date('2000-01-01').getTime() / 1000),
+    attestBirth(
+      BigInt(Math.floor(new Date('2000-01-01').getTime() / 1000)),
     );
 
     await submitCallTx<Contract, 'verifyAge'>(providers, {
@@ -179,8 +208,9 @@ describe(`Age Verify Contract (${network})`, () => {
   });
 
   it('Rejects an underage user (should fail)', async () => {
-    // "born" 60 seconds ago -> definitely not 18 yet
-    testBirthTimestamp.value = BigInt(Math.floor(Date.now() / 1000) - 60);
+    // "born" 60 seconds ago -> definitely not 18 yet, but still validly
+    // signed, so this fails the age check rather than signature verification
+    attestBirth(BigInt(Math.floor(Date.now() / 1000) - 60));
 
     await expect(
       submitCallTx<Contract, 'verifyAge'>(providers, {
