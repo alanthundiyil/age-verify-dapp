@@ -6,13 +6,13 @@ import { submitCallTx } from '@midnight-ntwrk/midnight-js-contracts';
 import { Bytes32Descriptor, transientHash } from '@midnight-ntwrk/midnight-js-protocol/compact-runtime';
 import { CompiledAgeVerifyContract, Contract, testAttestation } from '../contracts/index.js';
 import { schnorrSign } from '../src/test/utils/schnorr.js';
-import type { HelloWorldProviders } from '../src/providers.js';
+import type { AgeVerifyProviders } from '../src/providers.js';
 import type { Deployment } from './deployment.js';
 
 const PRIVATE_STATE_ID = 'DemoSeedAgeVerifyState';
 
 export async function verifyGuest(
-  providers: HelloWorldProviders,
+  providers: AgeVerifyProviders,
   deployment: Deployment,
   userId: Uint8Array,
   birthTimestamp: bigint,

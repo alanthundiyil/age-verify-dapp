@@ -6,21 +6,21 @@ import { levelPrivateStateProvider } from '@midnight-ntwrk/midnight-js-level-pri
 import { type MidnightWalletProvider } from './wallet.js';
 import { type NetworkConfig } from './config.js';
 
-export type HelloWorldCircuits = 'storeMessage';
+export type AgeVerifyCircuits = 'verifyAge' | 'registerProvider' | 'removeProvider';
 
-export type HelloWorldProviders = MidnightProviders<any>;
+export type AgeVerifyProviders = MidnightProviders<any>;
 
 export function buildProviders(
     wallet: MidnightWalletProvider,
     zkConfigPath: string,
     config: NetworkConfig,
-): HelloWorldProviders {
-    const zkConfigProvider = new NodeZkConfigProvider<HelloWorldCircuits>(zkConfigPath);
+): AgeVerifyProviders {
+    const zkConfigProvider = new NodeZkConfigProvider<AgeVerifyCircuits>(zkConfigPath);
 
     return {
         privateStateProvider: levelPrivateStateProvider({
-            privateStateStoreName: `hello-world-${Date.now()}`,
-            privateStoragePasswordProvider: () => 'Hello-World-Test-Password',
+            privateStateStoreName: `age-verify-${Date.now()}`,
+            privateStoragePasswordProvider: () => 'Age-Verify-Test-Password',
             accountId: wallet.getCoinPublicKey(),
         }),
         publicDataProvider: indexerPublicDataProvider(
