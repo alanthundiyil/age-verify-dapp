@@ -4,7 +4,7 @@ export function initAdmin(root: HTMLElement): void {
   root.innerHTML = `
     ${renderNav('admin')}
     <h1>Attestation Provider</h1>
-    <p style="text-align:left; background:#1a1f3a; padding:0.75rem 1rem; border-radius:8px;">
+    <p class="card">
       Stands in for the trusted party that would check a real ID in
       production. Signing happens server-side — your browser never sees any
       private key. It's kept off the guest page on purpose: whoever can use

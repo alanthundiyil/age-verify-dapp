@@ -14,7 +14,7 @@ export function initBouncer(root: HTMLElement): void {
     <button id="new-check">1. Start new check</button>
     <canvas id="qr-out" style="display:none;"></canvas>
     <button id="scan-response" disabled>2. Scan guest's badge</button>
-    <video id="video" autoplay playsinline muted style="display:none; max-width: 100%;"></video>
+    <video id="video" autoplay playsinline muted style="display:none;"></video>
     <p id="result"></p>
   `;
 
@@ -27,7 +27,7 @@ export function initBouncer(root: HTMLElement): void {
   newCheckBtn.addEventListener('click', async () => {
     scan?.stop();
     videoEl.style.display = 'none';
-    resultEl.textContent = '';
+    setStatus('');
     currentChallenge = randomBytes(16);
     qrOutEl.style.display = '';
     await renderQr(qrOutEl, encodeChallenge(currentChallenge));
@@ -38,7 +38,7 @@ export function initBouncer(root: HTMLElement): void {
     if (!currentChallenge) return;
     scan?.stop();
     videoEl.style.display = '';
-    resultEl.textContent = 'Point your camera at the guest’s badge QR code…';
+    setStatus('Point your camera at the guest’s badge QR code…');
     scan = startScanning(videoEl, (text) => {
       videoEl.style.display = 'none';
       checkResponse(text, currentChallenge!).catch((err) => {
@@ -47,10 +47,14 @@ export function initBouncer(root: HTMLElement): void {
     });
   });
 
-  function showResult(ok: boolean, message: string): void {
+  function setStatus(message: string): void {
+    resultEl.className = '';
     resultEl.textContent = message;
-    resultEl.style.color = ok ? 'green' : 'crimson';
-    resultEl.style.fontWeight = 'bold';
+  }
+
+  function showResult(ok: boolean, message: string): void {
+    resultEl.className = `badge ${ok ? 'badge-success' : 'badge-fail'}`;
+    resultEl.textContent = message;
   }
 
   async function checkResponse(text: string, challenge: Bytes): Promise<void> {
