@@ -25,15 +25,21 @@ yarn env:up
 #    contract accepts). Only needs to run once per devnet.
 yarn demo:init
 
-# 3. Repeatable: mark a guest's ID as verified 18+ on-chain (stand-in for
-#    real KYC — see NOTES.md's "Known limitation"). Get <userId> from the
-#    guest page below on first load, then run:
-yarn demo:seed --userId <64 hex chars> --birthdate 2000-01-01
-
-# 4. Backend (reads the indexer) and frontend, in two terminals
+# 3. Backend and frontend, in two terminals
 yarn demo:server
 yarn demo:dev
 ```
+
+Repeatable: mark a guest's ID as verified 18+ on-chain (stand-in for real
+KYC — see NOTES.md's "Known limitation"). Get `<userId>` from the guest
+page below on first load, then either:
+
+- open `http://localhost:5173/?role=admin` and use the form (see "The
+  admin page" below), or
+- run `yarn demo:seed --userId <64 hex chars> --birthdate 2000-01-01` from
+  a terminal, if you'd rather script it.
+
+Both do the exact same thing under the hood.
 
 Then open `http://localhost:5173/?role=guest` in one browser window/tab and
 `http://localhost:5173/?role=bouncer` in another — two windows on the same
@@ -51,10 +57,21 @@ Android, or right-click it on desktop) straight to the guest and bouncer
 views. `yarn demo:dev` runs the PWA in dev mode already — no build step
 needed to try installing it locally.
 
+## The admin page
+
+`http://localhost:5173/?role=admin` is REEK's (the trusted attestation
+provider's) internal tool — the page itself explains what it's doing and
+why it's kept separate from the guest page. Deliberately **not** linked
+prominently from anywhere a real guest would see; it's reachable via a
+small link on the landing page for demo convenience only. The backend only
+accepts `/api/verify-guest` requests from `localhost` (see
+`apps/demo/server.ts`), since unlike the read-only `/api/verified`
+endpoint, this one can mark any ID as verified for any birthdate typed in.
+
 ## Trying the flow
 
-1. On the guest page, copy the displayed ID and run `yarn demo:seed` with it
-   (step 3 above) if you haven't already.
+1. On the guest page, copy the displayed ID and verify it (via the admin
+   page or `yarn demo:seed`, above) if you haven't already.
 2. On the bouncer page, click **"1. Start new check"** — shows a challenge QR.
 3. On the guest page, click **"Show my badge to a bouncer"**, point its
    camera at the bouncer's challenge QR. It signs the challenge and shows a
