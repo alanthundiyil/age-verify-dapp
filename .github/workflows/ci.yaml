@@ -41,23 +41,27 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Generate contract source
-        run: |
-          cat > contracts/hello-world.compact <<'EOF'
-          pragma language_version 0.23;
-
-          export ledger message: Opaque<"string">;
-
-          export circuit storeMessage(newMessage: Opaque<"string">): [] {
-            message = disclose(newMessage);
-          }
-          EOF
-
       - name: Compile contract
         run: yarn compile
 
       - name: Start local Midnight network
-        run: yarn env:up
+        # The indexer occasionally crashes if it queries the node for block 1
+        # before the node has produced it yet (a startup race in the
+        # reference docker-compose setup, not this project's code — the
+        # node's healthcheck only confirms its RPC endpoint responds, not
+        # that it has produced a block past genesis). Retrying clears it.
+        run: |
+          for attempt in 1 2 3; do
+            echo "Attempt $attempt..."
+            if yarn env:up; then
+              exit 0
+            fi
+            echo "Attempt $attempt failed — tearing down and retrying."
+            docker compose down --remove-orphans || true
+            sleep 2
+          done
+          echo "All attempts failed."
+          exit 1
 
       - name: Wait for DUST to accrue
         run: npx vite-node scripts/wait-for-dust.ts
