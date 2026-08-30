@@ -16,6 +16,8 @@
 
 body {
   font-family: system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
   max-width: 480px;
   margin: 2rem auto;
   padding: 0 1rem;
@@ -25,32 +27,81 @@ body {
 }
 
 h1 {
+  font-size: 1.7rem;
   font-weight: 700;
   letter-spacing: -0.02em;
+  margin-bottom: 0.3rem;
+}
+
+p {
+  line-height: 1.6;
 }
 
 a {
   color: var(--accent);
 }
 
-nav {
+.muted {
   color: var(--text-muted);
 }
-nav a {
+
+.tagline {
+  color: var(--text-muted);
+  margin-top: -0.4rem;
+  font-size: 0.95rem;
+}
+
+/* Nav: a small "back home" link above a pill-style tab bar, rather than
+   plain text links separated by middots. */
+.topbar {
+  margin-bottom: 1.5rem;
+}
+.home-link {
+  display: inline-block;
+  font-size: 0.85em;
   color: var(--text-muted);
   text-decoration: none;
+  margin-bottom: 0.6rem;
 }
-nav a:hover {
+.home-link:hover {
   color: var(--accent);
 }
-nav strong {
-  color: var(--accent);
+.tabbar {
+  display: flex;
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 999px;
+  padding: 4px;
+  gap: 4px;
+}
+.tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: 999px;
+  font-size: 0.82em;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+.tab:hover {
+  color: var(--text);
+}
+.tab--active {
+  background: var(--accent);
+  color: var(--accent-text);
 }
 
 button {
   font-size: 1rem;
   font-weight: 600;
-  padding: 0.7rem 1.4rem;
+  min-height: 44px;
+  padding: 0.75rem 1.5rem;
   margin: 0.5rem 0.25rem;
   border: none;
   border-radius: 999px;
@@ -79,6 +130,7 @@ button.secondary {
 
 input {
   font-size: 1rem;
+  min-height: 44px;
   padding: 0.6rem 0.8rem;
   border-radius: 8px;
   border: 1px solid var(--surface-border);
