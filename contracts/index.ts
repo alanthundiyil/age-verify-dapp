@@ -12,11 +12,11 @@ export {
   type ImpureCircuits,
   type PureCircuits,
   type Schnorr_SchnorrSignature,
-} from './managed/age-verify/contract/index.js';   // was: managed/hello-world
+} from './managed/age-verify/contract/index.js';
 import { Contract } from './managed/age-verify/contract/index.js';
 
 const currentDir = path.resolve(new URL(import.meta.url).pathname, '..');
-export const zkConfigPath = path.resolve(currentDir, 'managed', 'age-verify'); // was: 'hello-world'
+export const zkConfigPath = path.resolve(currentDir, 'managed', 'age-verify');
 
 const TWO_248 = 452312848583266388373324160190187140051835877600158453279131187530910662656n;
 
@@ -34,7 +34,7 @@ export const testAttestation = {
   },
 };
 
-export const CompiledAgeVerifyContract = CompiledContract.make(  // renamed from CompiledHelloWorldContract
+export const CompiledAgeVerifyContract = CompiledContract.make(
   'AgeVerifyContract',
   Contract,
 ).pipe(

@@ -23,7 +23,7 @@ import {
   syncWallet,
   type WalletSecret,
 } from '../wallet.js';
-import { buildProviders, type HelloWorldProviders } from '../providers.js';
+import { buildProviders, type AgeVerifyProviders } from '../providers.js';
 import {
   CompiledAgeVerifyContract,
   Contract,
@@ -102,7 +102,7 @@ function attestBirth(birthTimestamp: bigint) {
 
 describe(`Age Verify Contract (${network})`, () => {
   let wallet: MidnightWalletProvider;
-  let providers: HelloWorldProviders;
+  let providers: AgeVerifyProviders;
   let contractAddress: ContractAddress;
 
   const config = getConfig();
@@ -113,7 +113,7 @@ describe(`Age Verify Contract (${network})`, () => {
       (isRemote ? 60 * 60_000 : 10 * 60_000),
   );
 
-  async function queryLedger(p: HelloWorldProviders) {
+  async function queryLedger(p: AgeVerifyProviders) {
     const state = await p.publicDataProvider.queryContractState(contractAddress);
     expect(state).not.toBeNull();
     return ledger(state!.data);

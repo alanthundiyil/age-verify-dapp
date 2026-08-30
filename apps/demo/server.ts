@@ -11,7 +11,7 @@ import type { EnvironmentConfiguration } from '@midnight-ntwrk/testkit-js';
 import { getConfig } from '../../src/config.js';
 import { ledger, zkConfigPath } from '../../contracts/index.js';
 import { MidnightWalletProvider, syncWallet } from '../../src/wallet.js';
-import { buildProviders, type HelloWorldProviders } from '../../src/providers.js';
+import { buildProviders, type AgeVerifyProviders } from '../../src/providers.js';
 import { readDeployment, deploymentPath } from '../../scripts/deployment.js';
 import { verifyGuest } from '../../scripts/verify-guest.js';
 
@@ -37,8 +37,8 @@ if (!(await readDeployment())) {
 // the read-only /api/verified endpoint (matching how it worked before this
 // wallet-backed endpoint existed). Built once and reused after that, since
 // wallet sync itself takes a few seconds — not worth repeating per request.
-let writeProvidersPromise: Promise<HelloWorldProviders> | null = null;
-async function getWriteProviders(): Promise<HelloWorldProviders> {
+let writeProvidersPromise: Promise<AgeVerifyProviders> | null = null;
+async function getWriteProviders(): Promise<AgeVerifyProviders> {
   if (!writeProvidersPromise) {
     writeProvidersPromise = (async () => {
       const logger = pino({ level: process.env['LOG_LEVEL'] ?? 'info' });

@@ -10,7 +10,7 @@ import { deployContract, submitCallTx, type DeployedContract } from '@midnight-n
 import type { EnvironmentConfiguration } from '@midnight-ntwrk/testkit-js';
 import { getConfig } from '../src/config.js';
 import { MidnightWalletProvider, syncWallet } from '../src/wallet.js';
-import { buildProviders, type HelloWorldProviders } from '../src/providers.js';
+import { buildProviders, type AgeVerifyProviders } from '../src/providers.js';
 import { CompiledAgeVerifyContract, Contract, zkConfigPath } from '../contracts/index.js';
 import { generateProviderKeyPair } from '../src/test/utils/schnorr.js';
 import { readDeployment, writeDeployment, deploymentPath } from './deployment.js';
@@ -43,7 +43,7 @@ await wallet.start();
 try {
   logger.info('Syncing wallet...');
   await syncWallet(logger, wallet.wallet);
-  const providers: HelloWorldProviders = buildProviders(wallet, zkConfigPath, config);
+  const providers: AgeVerifyProviders = buildProviders(wallet, zkConfigPath, config);
 
   logger.info('Deploying the age-verify contract...');
   const deployed: DeployedContract<Contract> = await deployContract<Contract>(providers, {

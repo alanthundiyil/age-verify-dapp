@@ -10,7 +10,7 @@ import { setNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
 import type { EnvironmentConfiguration } from '@midnight-ntwrk/testkit-js';
 import { getConfig } from '../src/config.js';
 import { MidnightWalletProvider, syncWallet } from '../src/wallet.js';
-import { buildProviders, type HelloWorldProviders } from '../src/providers.js';
+import { buildProviders, type AgeVerifyProviders } from '../src/providers.js';
 import { zkConfigPath } from '../contracts/index.js';
 import { readDeployment } from './deployment.js';
 import { verifyGuest } from './verify-guest.js';
@@ -61,7 +61,7 @@ await wallet.start();
 try {
   logger.info('Syncing wallet...');
   await syncWallet(logger, wallet.wallet);
-  const providers: HelloWorldProviders = buildProviders(wallet, zkConfigPath, config);
+  const providers: AgeVerifyProviders = buildProviders(wallet, zkConfigPath, config);
 
   logger.info(`Submitting verifyAge for userId ${userIdHex} (birthdate ${birthdate})...`);
   await verifyGuest(providers, deployment, userId, birthTimestamp);
