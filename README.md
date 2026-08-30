@@ -1,137 +1,100 @@
-# Hello World Example
+# Midnight Bouncer
 
-The repository is intended as part of the tutorial flow for the hello-world example in the [Midnight documentation](https://docs.midnight.network/getting-started/hello-world). It does not operate as a complete repository without the accompanying documentation.
+*Checks your age. Keeps your secrets.*
 
-The below documentation will be provided here to "finish" this example.
+A privacy-preserving age verification dApp built on [Midnight
+Network](https://midnight.network). Prove you're 18+ using zero-knowledge
+proofs — without ever revealing your birthdate, your exact age, or your
+identity, to the app or to the blockchain itself.
 
-## Set up project
+## What's here
+
+- **A Compact smart contract** ([`contracts/age-verify.compact`](contracts/age-verify.compact))
+  that verifies a Schnorr-signed birthdate attestation from a trusted
+  provider, then checks it against the chain's own block time — never a
+  user-supplied "today's date." See [NOTES.md](NOTES.md) for the full
+  technical walkthrough.
+- **Midnight Bouncer**, an installable demo app ([`apps/demo/`](apps/demo/))
+  showing what this looks like in practice: a bouncer scans a guest's phone
+  and sees "Verified 18+," live, via a QR-based challenge-response that
+  can't be replayed from a screenshot. See [apps/demo/README.md](apps/demo/README.md)
+  to run it.
+
+## Quick start
 
 ```bash
-git clone git@github.com:midnightntwrk/example-hello-world.git
-```
-
-Install dependencies:
-
-```bash
+# install dependencies
 yarn install
-```
 
-## Create the contract file
+# compile the contract
+yarn compile
 
-Create a new file named `hello-world.compact` in the `contracts` directory:
-
-```bash
-touch contracts/hello-world.compact
-```
-
-Open this file in VS Code:
-```bash
-code .
-```
-
-## Create the Compact Smart Contract
-
-```compact
-pragma language_version 0.23;
-
-export ledger message: Opaque<"string">;
-
-export circuit storeMessage(newMessage: Opaque<"string">): [] {
-  message = disclose(newMessage);
-}
-```
-- `pragma language_version` specifies which version of Compact your contract uses.
-- `ledger message` creates a state variable named `message` that stores a string value in the on-chain state. On-chain state is public and persistent on the blockchain.
-- `circuit storeMessage` is a Compact circuit (function) that defines the logic to modify on-chain state.
-- `newMessage: Opaque<"string">` is the input parameter. *Circuit parameters are always private by default.* The `disclose()` function marks the private value as safe to store publicly. Without it, trying to assign `newMessage` directly to the ledger returns a compiler error.
-
-## Compile the contract
-
-Compiling transforms your Compact code into zero-knowledge circuits, generates cryptographic keys, 
-and creates TypeScript APIs and a JavaScript implementation for the contract to be used by DApps. 
-
-Run the compiler from the contracts folder:
-
-```bash
-compact compile hello-world.compact managed/hello-world
-```
-
-You should see the following output:
-
-```
-Compiling 1 circuits:
-  circuit "storeMessage" (k=6, rows=26)
-```
-
-The compilation process will:
-1. Parse and validate your Compact code.
-2. Generate zero-knowledge circuits from your logic.
-3. Create proving and verifying keys for the circuits.
-4. Generate the TypeScript API and JavaScript implementation for the contract.
-
-When compilation completes, you'll see a new directory structure:
-
-```
-contracts/
-├── managed/
-|   └── hello-world/
-|        ├── compiler/
-|        ├── contract/
-|        ├── keys/
-|        └── zkir/
-└── hello-world.compact
-└── index.ts
-```
-
-Here's what each directory contains:
-
-- **contract/**: The compiled contract artifacts, which includes the JavaScript implementation and type definitions.
-- **keys/**: Cryptographic proving and verifying keys that enable zero-knowledge proofs.
-- **zkir/**: Zero-Knowledge Intermediate Representation—the bridge between Compact and the ZK backend.
-- **compiler/**: Compiler-generated JSON output that other tools can use to understand the contract structure.
-
-## Deploy Contract to Local Devnet
-Now that your contract is compiled, it needs to be deployed to the blockchain so that you can interact with it.
-
-Be sure the Docker engine is running and in a *separate terminal* start the proof server from the project root:
-```bash
+# start the local devnet (node + indexer + proof server)
 yarn env:up
-```
 
-Leave the proof server running for the following steps.
-
-To deploy the contract, you'll need a wallet. The local devnet package comes with 3 pre-funded wallets.
-
-
-Run the deployment script:
-```bash
+# run the full test suite against it (13 tests: contract, attestation, edge cases)
 yarn test:local
-```
 
-The test script will begin to show output from your local devnet and will progress the contract deployment and interaction programatically:
-
-```
-[12:46:12.694] INFO (22064): Wallet sync complete after 23 emissions
-[12:46:12.703] INFO (22064): Providers initialized. Ready to test
-[12:46:12.707] INFO (22064): Creating private state...
-[12:46:32.347] INFO (22064): Setting the contract address...
-[12:46:32.347] INFO (22064): Contract deployed at: bba6579743ae23b44301d4a9f8df30dbd5244d63a59d8fbc2c9fc7ea521a04f8
- ✓ src/test/hw.test.ts (2 tests) 39112ms
-   ✓ Hello World Contract > Deploys the contract  19649ms
-   ✓ Hello World Contract > Stores Hello World!   18184ms
-```
-
-Stop the Docker container:
-```bash
+# tear down the local devnet when done
 yarn env:down
 ```
 
-Hello World! You are now ready to explore [Tutorials](https://docs.midnight.network/category/tutorials) for more detailed instructions on building DApps on Midnight!
+Prefer a fast, no-devnet test run first?
 
-## Deploy Contract to Live Testnet
+```bash
+npx vitest run src/test/age-verify.simulator.test.ts
+```
 
-To run this test script on Preview or Preprod:
-1. Generate a wallet on the given network and fund it manually via the network's faucet page — [Preview](https://midnight-tmnight-preview.nethermind.dev/) or [Preprod](https://midnight-tmnight-preprod.nethermind.dev/). The faucet is a human-facing web page (no programmatic drip endpoint), so the test suite assumes the seed you supply is already funded with tNIGHT. tDUST can be delegated in 1AM or Lace Carbon (coming soon). See [Environments and endpoints](https://docs.midnight.network/relnotes/network) for reference.
-1. Create `.env.<network>` and populate it based on the information in `.env.<network>.example` in this repository.
-1. Start the proof server: `yarn proof:up`
-1. Start the test: `yarn test:<network>` -- the wallet will sync to the network and advance the test suite programmatically.
+To run the demo app:
+
+```bash
+yarn demo:init      # one-time: deploy the contract, register a demo attestation provider
+yarn demo:server    # backend, in one terminal
+yarn demo:dev       # frontend, in another — open http://localhost:5173
+```
+
+See [apps/demo/README.md](apps/demo/README.md) for the full walkthrough
+(seeding a guest, the QR flow, installing it as a PWA).
+
+## How it works, briefly
+
+- The contract never stores or reveals a birthdate or exact age — only a
+  boolean, per user ID, on a public ledger map.
+- A trusted attestation provider Schnorr-signs a birthdate off-chain; the
+  circuit verifies that signature on-chain before ever checking the age
+  math, binding the signature to the specific user ID so it can't be
+  replayed for someone else.
+- The provider registry itself is admin-managed on-chain, with the admin
+  role derived from a witness-held secret — not the spoofable `ownPublicKey()`.
+
+Full technical detail — the actual circuit code, why each `disclose()` is
+where it is, the provider registry/admin design, test coverage, and open
+questions — is in [NOTES.md](NOTES.md).
+
+## Project structure
+
+```
+age-verify-dapp/
+├── contracts/            # the Compact contract + compiled output
+├── src/                  # wallet/provider plumbing + contract tests
+├── apps/demo/            # the installable Midnight Bouncer demo app
+├── scripts/              # devnet setup/seeding scripts for the demo
+└── NOTES.md              # full technical write-up
+```
+
+## Known limitations
+
+This is a working proof of concept, not a production system:
+
+- The "trusted attestation provider" is simulated for the demo — no real
+  KYC/identity integration exists yet.
+- The demo's live QR check proves the *device* holding a verified identity
+  is present, not that it's specifically its original owner.
+
+See [NOTES.md's known-limitation section](NOTES.md#known-limitation-identity-sourcing)
+for the full list.
+
+## License
+
+Licensed under [Apache-2.0](LICENSE) — inherited from the Midnight
+`example-hello-world` template this project was originally built on.

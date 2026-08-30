@@ -5,11 +5,10 @@ export function initAdmin(root: HTMLElement): void {
     ${renderNav('admin')}
     <h1>Attestation Provider</h1>
     <p class="card">
-      Stands in for the trusted party that would check a real ID in
-      production. Signing happens server-side — your browser never sees any
-      private key. It's kept off the guest page on purpose: whoever can use
-      this can mark <em>any</em> ID as verified for <em>any</em> birthdate,
-      so a real deployment would lock it behind real authentication.
+      This component simulates the trusted third party that would verify real IDs in a production environment. 
+      All cryptographic signing happens server-side, ensuring private keys are never exposed to the browser. 
+      We intentionally separated this from the guest page: because this demo tool can mark any ID or birthdate as verified, 
+      a real deployment would strictly lock it behind strong authentication.
     </p>
     <form id="verify-form">
       <label for="user-id">Guest's ID (from the guest page)</label><br>
