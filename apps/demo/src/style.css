@@ -178,14 +178,17 @@ canvas {
 }
 
 .badge {
-  display: inline-flex;
+  /* flex (not inline-flex): forces its own row below whatever button came
+     before it, rather than sitting inline next to it when there's room. */
+  display: flex;
+  width: fit-content;
   align-items: center;
   gap: 0.5rem;
   font-size: 1.2rem;
   font-weight: 700;
   padding: 0.75rem 1.5rem;
   border-radius: 999px;
-  margin: 1rem 0;
+  margin: 1.5rem auto 0.5rem;
 }
 .badge-success {
   background: rgba(111, 207, 125, 0.15);
